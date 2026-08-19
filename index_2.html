@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GC Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0808;
+    --card:#151011;
+    --card-alt:#1c1516;
+    --line:rgba(255,255,255,0.08);
+    --line-strong:rgba(255,255,255,0.15);
+    --gold:#f0c869;
+    --gold-deep:#c9962f;
+    --red:#c11d2b;
+    --red-bright:#e02334;
+    --red-deep:#4a0a10;
+    --maroon:#2a0304;
+    --green:#3ecb6e;
+    --red-trend:#e15353;
+    --text:#f4f1ec;
+    --muted:#9c948c;
+    --faint:#6c645c;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:#000;
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+  }
+  .app{
+    width:100%;
+    max-width:420px;
+    min-height:100vh;
+    background:var(--bg);
+    position:relative;
+    padding-bottom:84px;
+    overflow-x:hidden;
+  }
+  .uppercase-black{ font-family:'Archivo Black',sans-serif; }
+  .px{ padding-left:16px; padding-right:16px; }
+
+  /* ---------------- Header ---------------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 16px 10px;
+    position:sticky; top:0; z-index:30;
+    background:rgba(10,8,8,0.92);
+    backdrop-filter:blur(6px);
+  }
+  header h1{ font-size:18px; font-weight:800; margin:0; letter-spacing:0.01em; }
+  .icon-btn{
+    width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--card-alt); border:1px solid var(--line-strong);
+    color:var(--muted); cursor:pointer; flex-shrink:0;
+    transition:transform .15s ease, border-color .2s ease;
+  }
+  .icon-btn:active{ transform:scale(0.92); }
+
+  /* ---------------- Hero banner ---------------- */
+  .hero{
+    margin:4px 16px 14px;
+    border-radius:18px;
+    position:relative;
+    overflow:hidden;
+    padding:14px 14px 14px;
+    text-align:center;
+    background:
+      radial-gradient(130% 90% at 50% 0%, rgba(240,200,105,0.16), transparent 55%),
+      radial-gradient(120% 100% at 50% 100%, rgba(193,29,43,0.35), transparent 60%),
+      linear-gradient(180deg, #1c0d05 0%, #0d0605 55%, #0a0808 100%);
+    border:1px solid rgba(240,200,105,0.28);
+    box-shadow: 0 0 40px -12px rgba(193,29,43,0.45);
+  }
+  .confetti{ position:absolute; opacity:0.85; pointer-events:none; }
+  .ribbon{
+    display:inline-flex; align-items:center; gap:5px;
+    background:linear-gradient(180deg, var(--red-bright), var(--red-deep));
+    color:#fff; font-size:10px; font-weight:800; letter-spacing:0.09em;
+    padding:4px 14px; border-radius:4px; position:relative;
+    box-shadow:0 4px 14px -4px rgba(193,29,43,0.7);
+  }
+  .ribbon::before, .ribbon::after{
+    content:''; position:absolute; top:100%; border-style:solid; width:0; height:0;
+  }
+  .ribbon::before{ left:0; border-width:5px 6px 0 0; border-color:#6e1015 transparent transparent transparent; }
+  .ribbon::after{ right:0; border-width:5px 0 0 6px; border-color:#6e1015 transparent transparent transparent; }
+
+  .hero h2{
+    margin:6px 0 0; font-size:19px; line-height:1.05; letter-spacing:0.01em;
+    background:linear-gradient(180deg, #fff6da, var(--gold) 55%, var(--gold-deep));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 2px 18px rgba(240,200,105,0.25);
+  }
+  .hero h3{
+    margin:1px 0 0; font-size:12px; font-weight:800; color:#fff; letter-spacing:0.03em;
+  }
+
+  .prize-center{ display:flex; flex-direction:column; align-items:center; margin-top:10px; position:relative; z-index:2; }
+  .rank-badge{
+    width:22px; height:22px; border-radius:50%; margin:0 auto 5px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:800; position:relative; z-index:3;
+    border:2px solid rgba(0,0,0,0.35);
+  }
+  .rank-badge.gold{ background:radial-gradient(circle at 35% 30%, #fff2c4, var(--gold-deep) 70%); color:#3a2400; width:26px; height:26px; font-size:12.5px; }
+  .rank-badge.silver{ background:radial-gradient(circle at 35% 30%, #f5f5f5, #9c9c9c 70%); color:#2a2a2a; }
+  .rank-badge.bronze{ background:radial-gradient(circle at 35% 30%, #e8b184, #a15a26 70%); color:#3a1c00; }
+
+  .phone-mock{
+    width:44px; height:80px; border-radius:11px;
+    background:linear-gradient(155deg,#2b2b2e,#0c0c0d 60%);
+    border:1.5px solid rgba(255,255,255,0.18);
+    position:relative; box-shadow:0 10px 26px -6px rgba(240,200,105,0.6), inset 0 0 0 2px rgba(0,0,0,0.4);
+  }
+  .phone-mock::before{ content:''; position:absolute; top:5px; left:50%; transform:translateX(-50%); width:12px; height:2.5px; border-radius:2px; background:rgba(255,255,255,0.25); }
+  .phone-mock::after{ content:''; position:absolute; inset:7px 4px; border-radius:7px; background:linear-gradient(160deg,#3a4a58,#0d1116); }
+
+  .prize-center .prize-label{ margin-top:6px; font-size:12.5px; font-weight:800; color:#fff; }
+
+  .second-pill{
+    margin:10px auto 0; display:inline-flex; align-items:center; gap:7px;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+    border-radius:999px; padding:5px 12px 5px 5px; width:fit-content;
+    font-size:10.5px; font-weight:700; color:rgba(244,241,236,0.9); position:relative; z-index:2;
+  }
+
+  /* ---------------- CTA bar ---------------- */
+  .cta-bar{
+    margin:0 16px 16px; border-radius:16px; padding:13px 14px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:linear-gradient(120deg, var(--red-bright), var(--maroon));
+    border:1px solid rgba(255,255,255,0.1);
+  }
+  .cta-bar .msg{ font-size:12px; font-weight:800; line-height:1.3; color:#fff; }
+  .cta-bar .msg b{ color:var(--gold); font-weight:800; }
+  .cta-btn{
+    flex-shrink:0; display:flex; align-items:center; gap:4px;
+    background:#fff; color:#3a0808; font-size:11px; font-weight:800;
+    padding:9px 13px; border-radius:10px; border:none; cursor:pointer;
+    white-space:nowrap;
+    transition:transform .12s ease;
+  }
+  .cta-btn:active{ transform:scale(0.95); }
+
+  /* ---------------- Leaderboard card ---------------- */
+  .lb-card{ margin:0 16px 16px; border-radius:18px; padding:16px; background:var(--card); border:1px solid var(--line); }
+
+  .rank-cta{
+    width:100%; margin-top:6px; position:relative;
+    display:flex; align-items:center; gap:8px;
+    background:linear-gradient(120deg, var(--red-bright), var(--maroon));
+    border:1px solid rgba(255,255,255,0.12); border-radius:12px;
+    padding:10px 12px; cursor:pointer; font-family:inherit;
+    transition:transform .12s ease;
+  }
+  .rank-cta:active{ transform:scale(0.98); }
+  .rank-cta-notch{
+    position:absolute; top:-6px; left:22px; width:12px; height:12px;
+    background:var(--red-bright); transform:rotate(45deg);
+    border-left:1px solid rgba(255,255,255,0.12); border-top:1px solid rgba(255,255,255,0.12);
+  }
+  .rank-cta-copy{ flex:1; text-align:left; font-size:11.5px; font-weight:700; color:#fff; line-height:1.35; }
+  .lb-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .lb-head .title{ font-size:15px; font-weight:800; }
+  .lb-head .days{ display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); }
+
+  .lb-cols{ display:flex; align-items:center; gap:10px; padding:0 2px; margin-bottom:8px; }
+  .lb-cols span{ font-size:9.5px; font-weight:800; letter-spacing:0.06em; color:rgba(255,255,255,0.72); }
+  .col-rank{ width:30px; flex-shrink:0; }
+  .col-name{ flex:1; }
+  .col-trend{ width:24px; flex-shrink:0; }
+  .col-gc{ width:70px; flex-shrink:0; text-align:right; }
+
+  .lb-row{
+    display:flex; align-items:center; gap:10px; padding:9px 8px;
+    border-radius:12px; margin-bottom:4px;
+    transition:background-color .2s ease, transform .15s ease;
+  }
+  .lb-row:active{ transform:scale(0.99); }
+  .lb-row.you{ background:linear-gradient(180deg, rgba(193,29,43,0.22), rgba(193,29,43,0.07)); border:1px solid rgba(193,29,43,0.4); }
+  .rank-pill{
+    width:26px; height:26px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;
+  }
+  .rank-pill.p1{ background:radial-gradient(circle at 35% 30%, #fff2c4, var(--gold-deep) 70%); color:#3a2400; }
+  .rank-pill.p2{ background:radial-gradient(circle at 35% 30%, #f5f5f5, #9c9c9c 70%); color:#2a2a2a; }
+  .rank-pill.p3{ background:radial-gradient(circle at 35% 30%, #e8b184, #a15a26 70%); color:#3a1c00; }
+  .rank-pill.pyou{ background:var(--card-alt); color:var(--red-bright); border:1.5px solid var(--red-bright); }
+
+  .lb-avatar{ width:30px; height:30px; border-radius:50%; flex-shrink:0; object-fit:cover; border:1.5px solid rgba(255,255,255,0.15); }
+  .lb-row.you .lb-avatar{ border-color:var(--red-bright); }
+  .lb-name{ flex:1; font-size:13.5px; font-weight:600; color:var(--text); }
+  .lb-row.you .lb-name{ color:var(--red-bright); font-weight:800; }
+  .trend-icon{ width:22px; height:13px; flex-shrink:0; }
+  .lb-gc{ width:70px; flex-shrink:0; display:flex; align-items:center; justify-content:flex-end; gap:5px; }
+  .lb-gc .score{ font-size:14px; font-weight:800; }
+  .coin{
+    width:19px; height:19px; border-radius:50%; flex-shrink:0;
+    background:radial-gradient(circle at 35% 30%, #fff2c4, var(--gold-deep) 70%);
+    display:flex; align-items:center; justify-content:center; font-size:7px; font-weight:900; color:#3a2400;
+  }
+
+  /* ---------------- Smartwatch claim card ---------------- */
+  .claim-card{
+    margin:0 16px 16px; border-radius:18px; padding:14px;
+    background:linear-gradient(120deg, #241205, #150e05);
+    border:1px solid rgba(240,200,105,0.35);
+    display:flex; align-items:center; gap:12px;
+    box-shadow:0 0 26px -14px rgba(240,200,105,0.5);
+  }
+  .watch-mock{ width:52px; height:52px; border-radius:14px; flex-shrink:0; position:relative;
+    background:linear-gradient(155deg,#2b2b2e,#0c0c0d 60%); border:1.5px solid rgba(255,255,255,0.18); }
+  .watch-mock::before, .watch-mock::after{ content:''; position:absolute; left:50%; transform:translateX(-50%); width:22px; height:7px; background:#1a1a1a; border:1px solid rgba(255,255,255,0.12); }
+  .watch-mock::before{ top:-7px; border-radius:4px 4px 0 0; }
+  .watch-mock::after{ bottom:-7px; border-radius:0 0 4px 4px; }
+  .watch-mock .face{ position:absolute; inset:7px; border-radius:9px; background:linear-gradient(160deg,#3a4a58,#0d1116); display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .claim-body{ flex:1; min-width:0; }
+  .claim-body .t{ font-size:13px; font-weight:800; color:var(--gold); margin:0 0 3px; }
+  .claim-body .d{ font-size:11px; color:var(--muted); line-height:1.4; margin:0 0 9px; }
+  .claim-btn{
+    display:inline-flex; align-items:center; gap:4px;
+    background:linear-gradient(180deg, var(--red-bright), var(--maroon));
+    color:#fff; font-size:11px; font-weight:800; padding:8px 13px; border-radius:9px;
+    border:1px solid rgba(255,255,255,0.12); cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .claim-btn:active{ transform:scale(0.95); }
+
+  /* ---------------- Testimonials ---------------- */
+  .testi-label{ padding:0 16px; font-size:13px; font-weight:800; color:var(--muted); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.04em; }
+  .testi-grid{ display:flex; gap:10px; padding:0 16px 4px; }
+  .testi-card{ flex:1; min-width:0; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:11px; }
+  .testi-card .avatar{ width:30px; height:30px; border-radius:50%; object-fit:cover; border:1.5px solid rgba(240,200,105,0.4); margin-bottom:7px; }
+  .testi-card .quote{ font-size:10.5px; line-height:1.4; color:rgba(244,241,236,0.85); margin:0 0 8px; }
+  .testi-card .name{ font-size:11.5px; font-weight:800; margin:0; }
+  .testi-card .prize{ font-size:9.5px; font-weight:700; color:var(--gold); margin-top:1px; }
+
+  /* ---------------- Bottom nav ---------------- */
+  .bottom-nav{
+    position:fixed; left:50%; bottom:0; transform:translateX(-50%);
+    width:100%; max-width:420px; z-index:40;
+    background:rgba(10,8,8,0.96); backdrop-filter:blur(8px);
+    border-top:1px solid var(--line);
+    display:flex; padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+  }
+  .nav-item{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; color:var(--faint); font-family:inherit;
+    padding:4px 2px; cursor:pointer;
+  }
+  .nav-item svg{ width:21px; height:21px; }
+  .nav-item span{ font-size:9.5px; font-weight:700; }
+  .nav-item.active{ color:var(--red-bright); }
+  .nav-item .icon-wrap{ display:flex; align-items:center; justify-content:center; }
+  .nav-item.active .icon-wrap svg circle,
+  .nav-item.active .icon-wrap svg path,
+  .nav-item.active .icon-wrap svg rect{ }
+
+  /* ---------------- Modal / Toast ---------------- */
+  .overlay{
+    position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.62);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+    opacity:0; pointer-events:none; transition:opacity .22s ease;
+  }
+  .overlay.open{ opacity:1; pointer-events:auto; }
+  .modal{
+    width:100%; max-width:340px; background:var(--card); border:1px solid var(--line-strong);
+    border-radius:20px; padding:22px 20px; text-align:center;
+    transform:scale(0.92) translateY(6px); transition:transform .25s cubic-bezier(.34,1.4,.64,1);
+  }
+  .overlay.open .modal{ transform:scale(1) translateY(0); }
+  .modal .close-x{ position:absolute; }
+  .modal-icon{ width:56px; height:56px; border-radius:50%; margin:0 auto 14px; display:flex; align-items:center; justify-content:center; font-size:26px;
+    background:radial-gradient(circle at 35% 30%, #fff2c4, var(--gold-deep) 70%); }
+  .modal h4{ font-size:16px; font-weight:800; margin:0 0 8px; }
+  .modal p{ font-size:12.5px; color:var(--muted); line-height:1.5; margin:0 0 16px; }
+  .modal .earn-list{ text-align:left; margin:0 0 16px; padding:0; list-style:none; }
+  .modal .earn-list li{ display:flex; gap:9px; align-items:flex-start; font-size:12px; color:rgba(244,241,236,0.88); padding:8px 0; border-bottom:1px solid var(--line); }
+  .modal .earn-list li:last-child{ border-bottom:none; }
+  .modal .earn-list b{ color:var(--gold); }
+  .modal-btn{
+    width:100%; padding:12px; border-radius:12px; border:none; cursor:pointer;
+    background:linear-gradient(180deg, var(--red-bright), var(--maroon)); color:#fff;
+    font-size:13px; font-weight:800; transition:transform .12s ease;
+  }
+  .modal-btn:active{ transform:scale(0.97); }
+  .modal-btn.ghost{ background:var(--card-alt); border:1px solid var(--line-strong); color:var(--text); margin-top:8px; }
+
+  .watch-modal-visual{ width:88px; height:88px; margin:0 auto 14px; position:relative; }
+  .watch-modal-visual .watch-mock{ width:88px; height:88px; border-radius:22px; }
+  .watch-modal-visual .watch-mock::before, .watch-modal-visual .watch-mock::after{ width:32px; height:11px; }
+  .watch-modal-visual .watch-mock::before{ top:-11px; }
+  .watch-modal-visual .watch-mock::after{ bottom:-11px; }
+  .watch-modal-visual .face{ font-size:30px; }
+
+  .success-state{ display:none; }
+  .success-state.show{ display:block; animation:popIn .4s cubic-bezier(.34,1.4,.64,1); }
+  .claim-state.hide{ display:none; }
+  @keyframes popIn{ from{ opacity:0; transform:scale(0.85);} to{ opacity:1; transform:scale(1);} }
+
+  .toast{
+    position:fixed; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px);
+    max-width:340px; width:calc(100% - 48px);
+    background:var(--card-alt); border:1px solid var(--line-strong); border-radius:12px;
+    padding:11px 14px; font-size:12px; font-weight:600; color:var(--text);
+    z-index:70; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+    text-align:center; box-shadow:0 10px 30px -8px rgba(0,0,0,0.6);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header>
+    <h1>GC Leaderboard</h1>
+    <button class="icon-btn" id="infoBtn" aria-label="How the leaderboard works">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="10.5" x2="12" y2="16.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.3" r="1.1" fill="currentColor"/></svg>
+    </button>
+  </header>
+
+  <!-- Rewards hero banner -->
+  <section class="hero" id="heroBanner">
+    <span class="confetti" style="top:10%; left:8%; font-size:14px; transform:rotate(-15deg);">✦</span>
+    <span class="confetti" style="top:18%; left:88%; font-size:11px; transform:rotate(20deg);">✦</span>
+    <span class="confetti" style="top:6%; left:48%; font-size:10px;">✧</span>
+    <span class="confetti" style="top:34%; left:4%; font-size:12px; transform:rotate(10deg);">✧</span>
+    <span class="confetti" style="top:30%; left:93%; font-size:13px; transform:rotate(-10deg);">✦</span>
+    <span class="confetti" style="top:52%; left:2%; font-size:10px;">✧</span>
+    <span class="confetti" style="top:50%; left:96%; font-size:14px;">✦</span>
+
+    <div class="ribbon">TOP 3 REWARDS</div>
+    <h2 class="uppercase-black">AMAZING PRIZES</h2>
+    <h3 class="uppercase-black">UP FOR GRABS!</h3>
+
+    <div class="prize-center">
+      <div class="rank-badge gold">1</div>
+      <div class="phone-mock"></div>
+      <p class="prize-label">iPhone 15</p>
+    </div>
+
+    <div class="second-pill">
+      <span class="rank-badge silver" style="margin:0;">2</span>
+      <span>2nd Place — 10,000 Garage Coins</span>
+    </div>
+  </section>
+
+  <!-- Simple CTA bar -->
+  <div class="cta-bar">
+    <p class="msg">🔥 KEEP EARNING TO BREAK INTO THE <b>TOP 3</b></p>
+    <button class="cta-btn" id="earnMoreBtn">EARN MORE GC
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#3a0808" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <!-- April Leaderboard -->
+  <div class="lb-card">
+    <div class="lb-head">
+      <p class="title">April Leaderboard</p>
+      <div class="days">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        22 Days Left
+      </div>
+    </div>
+    <div class="lb-cols">
+      <span class="col-rank">RANK</span>
+      <span class="col-name">NAME</span>
+      <span class="col-trend"></span>
+      <span class="col-gc">GC EARNED</span>
+    </div>
+    <div id="lbRows"></div>
+
+    <button class="rank-cta" id="rankCtaBtn">
+      <span class="rank-cta-notch"></span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M12 19V5M12 5l-6 6M12 5l6 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="rank-cta-copy">Keep Earning to break into the Top 3 and win amazing rewards</span>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M9 6l6 6-6 6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <!-- Smartwatch claim card -->
+  <div class="claim-card" id="claimCard">
+    <div class="watch-mock"><div class="face">⌚</div></div>
+    <div class="claim-body">
+      <p class="t">🎁 CLAIM YOUR SMARTWATCH AWARD!</p>
+      <p class="d">You finished #3 last month! We have an exciting smartwatch for you to claim.</p>
+      <button class="claim-btn" id="claimBtn">CLAIM NOW
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Previous winners -->
+  <p class="testi-label">Previous Winners</p>
+  <div class="testi-grid" id="testiGrid"></div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" data-name="Home">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 001 1h3v-6h4v6h3a1 1 0 001-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" data-name="Garage">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12l1.5-5.5A2 2 0 016.4 5h11.2a2 2 0 011.9 1.5L21 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="12" width="18" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><circle cx="7.5" cy="19" r="1.4" stroke="currentColor" stroke-width="1.8"/><circle cx="16.5" cy="19" r="1.4" stroke="currentColor" stroke-width="1.8"/></svg></span>
+      <span>Garage</span>
+    </button>
+    <button class="nav-item" data-name="Earn GC">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><text x="12" y="15.5" font-size="8" font-weight="800" fill="currentColor" text-anchor="middle">GC</text></svg></span>
+      <span>Earn GC</span>
+    </button>
+    <button class="nav-item" data-name="Leaderboard">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 4h10v6a5 5 0 01-10 0V4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 6H4.5A1.5 1.5 0 003 7.5c0 2 1.5 3.5 4 3.8M17 6h2.5A1.5 1.5 0 0121 7.5c0 2-1.5 3.5-4 3.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+      <span>Leaderboard</span>
+    </button>
+    <button class="nav-item" data-name="Profile">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.5" r="3.2" stroke="currentColor" stroke-width="2"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+      <span>Profile</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- Info modal -->
+<div class="overlay" id="infoOverlay">
+  <div class="modal">
+    <div class="modal-icon">ℹ️</div>
+    <h4>How the leaderboard works</h4>
+    <ul class="earn-list">
+      <li><span>🏆</span><span>Rankings are based on GC credited during the current leaderboard month.</span></li>
+      <li><span>⏳</span><span>GC is credited after the applicable return window ends.</span></li>
+      <li><span>🔁</span><span>GC credited after month-end counts towards next month's leaderboard.</span></li>
+    </ul>
+    <button class="modal-btn" data-close="infoOverlay">Got it</button>
+  </div>
+</div>
+
+<!-- Earn More GC modal -->
+<div class="overlay" id="earnOverlay">
+  <div class="modal">
+    <div class="modal-icon">⚡</div>
+    <h4>Ways to earn more GC</h4>
+    <ul class="earn-list">
+      <li><span>🛍️</span><span>Shop — get <b>1 GC</b> for every ₹100 spent</span></li>
+      <li><span>⭐</span><span>Write a review — get <b>10 GC</b> per product</span></li>
+      <li><span>👯</span><span>Refer a friend — get <b>50 GC</b> when they shop</span></li>
+    </ul>
+    <button class="modal-btn" data-close="earnOverlay">Got it</button>
+  </div>
+</div>
+
+<!-- Smartwatch claim modal -->
+<div class="overlay" id="watchOverlay">
+  <div class="modal">
+    <div class="claim-state" id="claimState">
+      <div class="watch-modal-visual"><div class="watch-mock"><div class="face">⌚</div></div></div>
+      <h4>Your Smartwatch Reward</h4>
+      <p>You finished <b style="color:var(--gold);">#3</b> last month! This smartwatch is yours to claim, on us.</p>
+      <button class="modal-btn" id="claimRewardBtn">Claim Reward</button>
+      <button class="modal-btn ghost" data-close="watchOverlay">Maybe later</button>
+    </div>
+    <div class="success-state" id="successState">
+      <div class="modal-icon" style="background:radial-gradient(circle at 35% 30%, #baffce, var(--green) 70%);">🎉</div>
+      <h4>Reward Claimed! 🎉</h4>
+      <p>Your smartwatch is on its way. You'll get a confirmation email with tracking details shortly.</p>
+      <button class="modal-btn" data-close="watchOverlay">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ---------------- data (easy to edit) ----------------
+  const LEADERBOARD = [
+    { rank: 1, name: 'Aryan', gc: 145, trend: 'up',   avatar: 'https://i.pravatar.cc/64?img=12', you: false },
+    { rank: 2, name: 'Neha',  gc: 141, trend: 'flat', avatar: 'https://i.pravatar.cc/64?img=47', you: false },
+    { rank: 3, name: 'Kabir', gc: 138, trend: 'down', avatar: 'https://i.pravatar.cc/64?img=33', you: false },
+    { rank: 4, name: 'You',   gc: 133, trend: 'up',   avatar: 'https://i.pravatar.cc/64?img=68', you: true  },
+  ];
+
+  const TESTIMONIALS = [
+    {
+      avatar: 'https://i.pravatar.cc/64?img=15',
+      quote: 'Winning an iPhone was beyond amazing! Keep earning, it\u2019s worth it!',
+      name: 'Rohit K.',
+      prize: 'iPhone 14 Winner'
+    },
+    {
+      avatar: 'https://i.pravatar.cc/64?img=44',
+      quote: 'Didn\u2019t expect to win this quickly. The rewards make earning GC really exciting!',
+      name: 'Priya M.',
+      prize: 'iPhone 14 Winner'
+    }
+  ];
+
+  const TREND_ICONS = {
+    up:   `<svg class="trend-icon" viewBox="0 0 24 14" fill="none" style="color:var(--green);"><polyline points="1,13 9,5 13,9 22,1" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16,1 22,1 22,7" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    down: `<svg class="trend-icon" viewBox="0 0 24 14" fill="none" style="color:var(--red-trend);"><polyline points="1,1 9,9 13,5 22,13" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16,13 22,13 22,7" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    flat: `<svg class="trend-icon" viewBox="0 0 24 14" fill="none" style="color:var(--faint);"><line x1="1" y1="7" x2="22" y2="7" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>`
+  };
+
+  function rankClass(rank, you){
+    if (you) return 'pyou';
+    if (rank === 1) return 'p1';
+    if (rank === 2) return 'p2';
+    return 'p3';
+  }
+
+  function renderLeaderboard(){
+    const wrap = document.getElementById('lbRows');
+    wrap.innerHTML = LEADERBOARD.map(row => `
+      <div class="lb-row ${row.you ? 'you' : ''}">
+        <div class="rank-pill ${rankClass(row.rank, row.you)}">${row.rank}</div>
+        <img class="lb-avatar" src="${row.avatar}" alt="${row.name}">
+        <p class="lb-name">${row.name}</p>
+        <span>${TREND_ICONS[row.trend]}</span>
+        <div class="lb-gc"><span class="score">${row.gc}</span><div class="coin">GC</div></div>
+      </div>
+    `).join('');
+  }
+
+  function renderTestimonials(){
+    const wrap = document.getElementById('testiGrid');
+    wrap.innerHTML = TESTIMONIALS.map(t => `
+      <div class="testi-card">
+        <img class="avatar" src="${t.avatar}" alt="${t.name}">
+        <p class="quote">"${t.quote}"</p>
+        <p class="name">${t.name}</p>
+        <p class="prize">${t.prize}</p>
+      </div>
+    `).join('');
+  }
+
+  renderLeaderboard();
+  renderTestimonials();
+
+  // ---------------- overlays ----------------
+  function openOverlay(id){
+    document.getElementById(id).classList.add('open');
+  }
+  function closeOverlay(id){
+    document.getElementById(id).classList.remove('open');
+  }
+  document.querySelectorAll('.overlay').forEach(ov => {
+    ov.addEventListener('click', (e) => { if (e.target === ov) closeOverlay(ov.id); });
+  });
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => closeOverlay(btn.dataset.close));
+  });
+
+  document.getElementById('infoBtn').addEventListener('click', () => openOverlay('infoOverlay'));
+  document.getElementById('earnMoreBtn').addEventListener('click', () => openOverlay('earnOverlay'));
+  document.getElementById('rankCtaBtn').addEventListener('click', () => openOverlay('earnOverlay'));
+
+  // smartwatch claim flow
+  const claimBtn = document.getElementById('claimBtn');
+  const claimState = document.getElementById('claimState');
+  const successState = document.getElementById('successState');
+  const claimRewardBtn = document.getElementById('claimRewardBtn');
+  let claimed = false;
+
+  claimBtn.addEventListener('click', () => {
+    claimState.classList.remove('hide');
+    successState.classList.remove('show');
+    openOverlay('watchOverlay');
+  });
+  claimRewardBtn.addEventListener('click', () => {
+    claimed = true;
+    claimState.classList.add('hide');
+    successState.classList.add('show');
+    const card = document.getElementById('claimCard');
+    card.querySelector('.t').textContent = '✅ SMARTWATCH CLAIMED!';
+    card.querySelector('.d').textContent = "It's on its way — check your email for tracking details.";
+    claimBtn.remove();
+  });
+
+  // ---------------- toast ----------------
+  let toastTimer;
+  function showToast(msg){
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  // ---------------- bottom nav ----------------
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      if (item.dataset.name !== 'Home') {
+        showToast(`${item.dataset.name} — coming soon`);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
